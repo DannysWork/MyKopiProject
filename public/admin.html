@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KopiSahaja - Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="loginSection" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <i class="fas fa-coffee"></i>
+                    <span>KopiSahaja</span>
+                </div>
+                <h2>Admin Dashboard</h2>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" style="display: none;">
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <div class="nav-container">
+                <div class="logo">
+                    <i class="fas fa-coffee"></i>
+                    <span>KopiSahaja Admin</span>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="totalOrders">0</h3>
+                    <p>Total Orders</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="pendingOrders">0</h3>
+                    <p>Pending Orders</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="todayOrders">0</h3>
+                    <p>Today's Orders</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="totalRevenue">SGD 0.00</h3>
+                    <p>Total Revenue</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="filter-container">
+            <h2>Order Management</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-status="all">
+                    <i class="fas fa-list"></i> All Orders
+                </button>
+                <button class="filter-btn" data-status="pending">
+                    <i class="fas fa-clock"></i> Pending
+                </button>
+                <button class="filter-btn" data-status="preparing">
+                    <i class="fas fa-coffee"></i> Preparing
+                </button>
+                <button class="filter-btn" data-status="ready">
+                    <i class="fas fa-check-circle"></i> Ready
+                </button>
+                <button class="filter-btn" data-status="completed">
+                    <i class="fas fa-flag-checkered"></i> Completed
+                </button>
+            </div>
+        </div>
+
+        <!-- Orders Container -->
+        <div class="orders-section">
+            <div id="ordersContainer" class="orders-grid">
+                <!-- Orders will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Order Details</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="orderDetails">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html> 
