@@ -537,7 +537,48 @@ function showCheckout() {
     const modalHeader = modal.querySelector('.modal-header h3');
     
     if (currentUser) {
-        // User is logged in - hide phone and email fields, update header
+        // Check if user has phone number
+        if (!currentUser.phone) {
+            // Show phone number prompt modal
+            const promptModal = document.createElement('div');
+            promptModal.className = 'modal';
+            promptModal.id = 'phonePromptModal';
+            promptModal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Phone Number Required</h3>
+                        <button class="close-btn" onclick="closeModal('phonePromptModal')">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Please provide your phone number to continue with checkout.</p>
+                        <form id="phonePromptForm" onsubmit="handlePhoneUpdate(event)">
+                            <div class="form-group">
+                                <label for="promptPhone">Phone Number</label>
+                                <input type="tel" id="promptPhone" name="phone" required 
+                                       pattern="[0-9]+" minlength="8" maxlength="15"
+                                       placeholder="Enter your phone number">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Save & Continue</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing prompt modal if any
+            const existingPrompt = document.getElementById('phonePromptModal');
+            if (existingPrompt) {
+                existingPrompt.remove();
+            }
+            
+            // Add new prompt modal
+            document.body.appendChild(promptModal);
+            promptModal.classList.add('active');
+            return;
+        }
+        
+        // User is logged in and has phone number - hide phone and email fields, update header
         phoneField.style.display = 'none';
         emailField.style.display = 'none';
         modalHeader.textContent = `Complete Your Order, ${currentUser.firstName || currentUser.username}!`;
@@ -564,7 +605,7 @@ function showCheckout() {
                     <i class="fas fa-user"></i> Ordering as: ${currentUser.email}
                 </p>
                 <p style="margin: 0.5rem 0 0 0; color: var(--text-light); font-size: 0.9rem;">
-                    <i class="fas fa-phone"></i> ${currentUser.phone || 'Phone not provided'} | 
+                    <i class="fas fa-phone"></i> ${currentUser.phone} | 
                     <a href="#" onclick="showProfile(); closeModal('checkoutModal');" style="color: var(--secondary-color);">
                         Update Profile
                     </a>
@@ -594,6 +635,45 @@ function showCheckout() {
     }
     
     modal.classList.add('active');
+}
+
+// Handle phone number update
+async function handlePhoneUpdate(event) {
+    event.preventDefault();
+    
+    const phone = document.getElementById('promptPhone').value;
+    
+    try {
+        const response = await fetch('/api/auth/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}`
+            },
+            body: JSON.stringify({
+                firstName: currentUser.firstName || '',
+                lastName: currentUser.lastName || '',
+                phone: phone
+            })
+        });
+        
+        if (response.ok) {
+            // Update local user data
+            currentUser.phone = phone;
+            localStorage.setItem('userData', JSON.stringify(currentUser));
+            
+            // Close phone prompt and show checkout
+            closeModal('phonePromptModal');
+            showNotification('Phone number updated successfully!');
+            showCheckout();
+        } else {
+            const error = await response.json();
+            showNotification(error.error || 'Failed to update phone number');
+        }
+    } catch (error) {
+        console.error('Error updating phone number:', error);
+        showNotification('Error updating phone number');
+    }
 }
 
 // Handle checkout
@@ -644,20 +724,91 @@ async function handleCheckout(e) {
             closeModal('checkoutModal');
             document.getElementById('cartSidebar').classList.remove('active');
             
-            // Show success modal
-            document.getElementById('orderId').textContent = result.orderId;
-            document.getElementById('successModal').classList.add('active');
+            // Create and show success modal with enhanced styling
+            const successModal = document.createElement('div');
+            successModal.className = 'modal success-modal';
+            successModal.id = 'successModal';
+            successModal.innerHTML = `
+                <div class="modal-content success-content">
+                    <div class="modal-header">
+                        <h3>Order Placed Successfully!</h3>
+                        <button class="close-btn" onclick="closeModal('successModal')">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="success-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <p>Your order has been placed successfully.</p>
+                        <p>Order ID: <strong id="orderId">${result.orderId}</strong></p>
+                        
+                        <!-- Telegram Notification Section -->
+                        <div class="telegram-section" style="
+                            background: var(--bg-light);
+                            padding: 1rem;
+                            border-radius: 10px;
+                            margin: 1rem 0;
+                        ">
+                            <p style="margin: 0 0 0.5rem 0;">
+                                <i class="fab fa-telegram-plane"></i>
+                                Get order updates via Telegram!
+                            </p>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="telegramChatId" 
+                                    placeholder="Enter your Telegram Chat ID"
+                                    style="
+                                        flex: 1;
+                                        padding: 0.5rem;
+                                        border: 1px solid var(--border-color);
+                                        border-radius: 5px;
+                                    "
+                                >
+                                <button onclick="linkTelegram()" class="secondary-btn">
+                                    <i class="fas fa-link"></i> Link
+                                </button>
+                            </div>
+                            <small style="display: block; margin-top: 0.5rem; color: var(--text-light);">
+                                Message our bot @KopiSahajaBot to get your Chat ID
+                            </small>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="primary-btn" onclick="trackNewOrder()">
+                                <i class="fas fa-map-marker-alt"></i> Track Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing success modal if any
+            const existingModal = document.getElementById('successModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add new success modal
+            document.body.appendChild(successModal);
+            
+            // Add click outside listener
+            successModal.addEventListener('click', (e) => {
+                if (e.target === successModal) {
+                    closeModal('successModal');
+                }
+            });
+            
+            // Show the modal
+            successModal.classList.add('active');
             
             // Join socket room for real-time updates
             socket.emit('join-order', result.orderId);
         } else {
             // Show error message from server
             console.error('Order failed:', result.error);
-            alert('Error placing order: ' + result.error);
+            showNotification('Error placing order: ' + result.error, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error placing order. Please try again.');
+        showNotification('Error placing order. Please try again.', 'error');
     }
 }
 
@@ -757,27 +908,44 @@ socket.on('status-update', (data) => {
     showNotification(`Order status updated: ${data.status}`);
 });
 
-// Show notification
-function showNotification(message) {
-    // Simple notification - you can enhance this
+// Show notification with type support
+function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: var(--primary-color);
+        background: ${type === 'error' ? 'var(--error-color, #e74c3c)' : 'var(--primary-color)'};
         color: white;
         padding: 1rem 2rem;
         border-radius: 10px;
         z-index: 3000;
         animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     `;
-    notification.textContent = message;
+    
+    notification.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" style="
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 0 0 1rem;
+        ">×</button>
+    `;
+    
     document.body.appendChild(notification);
     
     setTimeout(() => {
         notification.remove();
-    }, 3000);
+    }, 5000);
 }
 
 // Close modal
@@ -983,5 +1151,42 @@ function setLoading(button, loading) {
     } else {
         button.classList.remove('loading');
         button.disabled = false;
+    }
+}
+
+// Add the linkTelegram function if it doesn't exist
+async function linkTelegram() {
+    const chatId = document.getElementById('telegramChatId').value.trim();
+    const orderId = document.getElementById('orderId').textContent;
+    
+    if (!chatId) {
+        showNotification('Please enter your Telegram Chat ID', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/orders/${orderId}/telegram`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ telegramChatId: chatId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Telegram notifications enabled successfully!');
+            // Optionally disable the input and button after successful linking
+            document.getElementById('telegramChatId').disabled = true;
+            const linkButton = document.querySelector('.telegram-section button');
+            linkButton.disabled = true;
+            linkButton.innerHTML = '<i class="fas fa-check"></i> Linked';
+        } else {
+            showNotification(data.error || 'Failed to enable Telegram notifications', 'error');
+        }
+    } catch (error) {
+        console.error('Error linking Telegram:', error);
+        showNotification('Error enabling Telegram notifications', 'error');
     }
 } 

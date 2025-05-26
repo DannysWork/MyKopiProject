@@ -14,6 +14,18 @@ async function setupDatabase() {
     await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`);
     await connection.query(`USE ${process.env.DB_NAME}`);
 
+    // Drop existing tables in correct order (due to foreign key constraints)
+    console.log('Dropping existing tables...');
+    await connection.query(`
+      DROP TABLE IF EXISTS order_items;
+      DROP TABLE IF EXISTS orders;
+      DROP TABLE IF EXISTS password_resets;
+      DROP TABLE IF EXISTS admin_users;
+      DROP TABLE IF EXISTS drinks;
+      DROP TABLE IF EXISTS users;
+    `);
+
+    console.log('Creating tables...');
     // Create users table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -61,7 +73,7 @@ async function setupDatabase() {
       )
     `);
 
-    // Create orders table (updated to include user_id)
+    // Create orders table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id VARCHAR(36) PRIMARY KEY,
@@ -120,6 +132,7 @@ async function setupDatabase() {
     // Check if drinks already exist
     const [existingDrinks] = await connection.execute('SELECT COUNT(*) as count FROM drinks');
     if (existingDrinks[0].count === 0) {
+      console.log('Inserting sample drinks...');
       for (const drink of sampleDrinks) {
         await connection.execute(
           'INSERT INTO drinks (name, description, price, category, image_url) VALUES (?, ?, ?, ?, ?)',

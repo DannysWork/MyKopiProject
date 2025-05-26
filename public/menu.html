@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - KopiSahaja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo-link">
+                <div class="logo">
+                    <img src="/images/heading.png" alt="KopiSahaja Logo" class="logo-image">
+                </div>
+            </a>
+            <div class="nav-items">
+                <a href="/menu.html" class="nav-link active">Menu</a>
+                <button class="cart-btn" onclick="toggleCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </button>
+                <button class="track-btn" onclick="showTrackOrder()">
+                    <i class="fas fa-search"></i>
+                    Track Order
+                </button>
+                <!-- User Authentication - handled dynamically by JavaScript -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+        <div class="container">
+            <h2>Our Artisan Menu</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="Coffee">Coffee</button>
+                <button class="filter-btn" data-filter="Tea">Tea</button>
+                <button class="filter-btn" data-filter="Specialty">Specialty</button>
+                <button class="filter-btn" data-filter="Wellness">Wellness</button>
+            </div>
+            <div class="menu-grid" id="menuGrid">
+                <!-- Menu items will be dynamically loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Cart</h3>
+            <button class="close-btn" onclick="toggleCart()">×</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Cart items will be dynamically loaded here -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">SGD 0.00</span>
+            </div>
+            <button class="checkout-btn" onclick="showCheckout()">
+                <i class="fas fa-shopping-cart"></i> Checkout
+            </button>
+        </div>
+    </div>
+
+    <!-- Customize Modal -->
+    <div class="modal" id="customizeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="customizeTitle">Customize Your Drink</h3>
+                <button class="close-btn" onclick="closeModal('customizeModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="customizeForm">
+                    <div class="form-group">
+                        <label>Size</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="size" value="small" required>
+                                Small
+                            </label>
+                            <label>
+                                <input type="radio" name="size" value="medium" checked required>
+                                Medium
+                            </label>
+                            <label>
+                                <input type="radio" name="size" value="large" required>
+                                Large
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sugar Level</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="sugarLevel" value="0%" required>
+                                0%
+                            </label>
+                            <label>
+                                <input type="radio" name="sugarLevel" value="25%" required>
+                                25%
+                            </label>
+                            <label>
+                                <input type="radio" name="sugarLevel" value="50%" checked required>
+                                50%
+                            </label>
+                            <label>
+                                <input type="radio" name="sugarLevel" value="75%" required>
+                                75%
+                            </label>
+                            <label>
+                                <input type="radio" name="sugarLevel" value="100%" required>
+                                100%
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ice Level</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="iceLevel" value="No Ice" required>
+                                No Ice
+                            </label>
+                            <label>
+                                <input type="radio" name="iceLevel" value="Less Ice" required>
+                                Less Ice
+                            </label>
+                            <label>
+                                <input type="radio" name="iceLevel" value="Normal Ice" checked required>
+                                Normal Ice
+                            </label>
+                            <label>
+                                <input type="radio" name="iceLevel" value="Extra Ice" required>
+                                Extra Ice
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <div class="quantity-control">
+                            <button type="button" onclick="changeQuantity(-1)">-</button>
+                            <input type="number" id="quantity" value="1" min="1" readonly>
+                            <button type="button" onclick="changeQuantity(1)">+</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="add-to-cart-btn">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Login Modal -->
+    <div class="modal" id="quickLoginModal">
+        <div class="modal-content quick-login-content">
+            <div class="modal-header">
+                <h3>Login to Your Account</h3>
+                <button class="close-btn" onclick="closeModal('quickLoginModal')">×</button>
+            </div>
+            <form id="quickLoginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                </div>
+                <button type="submit" class="primary-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+            <div class="social-login">
+                <div id="main-page-google-signin"></div>
+            </div>
+            <div class="login-footer">
+                <button class="text-btn" onclick="continueAsGuest()">
+                    Continue as Guest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Complete Your Order</h3>
+                <button class="close-btn" onclick="closeModal('checkoutModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label for="checkoutName">Name</label>
+                        <input type="text" id="checkoutName" name="customerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="checkoutPhone">Phone</label>
+                        <input type="tel" id="checkoutPhone" name="customerPhone" 
+                               pattern="[0-9]+" minlength="8" maxlength="15" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="checkoutEmail">Email</label>
+                        <input type="email" id="checkoutEmail" name="customerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="orderNotes">Special Instructions (Optional)</label>
+                        <textarea id="orderNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="primary-btn">
+                        <i class="fas fa-check"></i> Place Order
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Track Order Modal -->
+    <div class="modal" id="trackModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Track Your Order</h3>
+                <button class="close-btn" onclick="closeModal('trackModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="trackOrderId">Order ID</label>
+                    <input type="text" id="trackOrderId" placeholder="Enter your order ID">
+                    <button onclick="trackOrder()" class="primary-btn">
+                        <i class="fas fa-search"></i> Track
+                    </button>
+                </div>
+                <div id="orderStatus">
+                    <!-- Order status will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html> 

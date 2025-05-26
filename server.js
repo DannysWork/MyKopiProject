@@ -572,10 +572,15 @@ app.post('/api/orders', async (req, res) => {
           customerPhone: user.phone || customerPhone,
           customerEmail: user.email || customerEmail
         };
+      } else {
+        // User not found in database, proceed as guest
+        console.log('User not found in database, proceeding as guest');
+        userId = null;
       }
     } catch (error) {
       // Token invalid, continue as guest
       console.log('Invalid token, proceeding as guest');
+      userId = null;
     }
   }
   
